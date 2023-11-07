@@ -52,15 +52,13 @@ public class AddAccount extends HttpServlet {
             //verify session
             HttpSession session = request.getSession();
             String accid = (String) session.getAttribute("ACC_ID");
-            
+            if (accid == null) 
+                request.getRequestDispatcher("login.jsp").forward(request, response);
+       
             //retrieve key using servlet context and convert to bytes
             String publicKey = getServletContext().getInitParameter("key");
             byte[] key = publicKey.getBytes();
-            String ePass = Security.encrypt(request.getParameter("pass"), key); 
-            if (accid == null) {
-                request.getRequestDispatcher("login.jsp").forward(request, response);
-            }
-
+            
             //check if user clicks add account
             String mvc = request.getParameter("add");
             if (mvc == null) {
@@ -69,16 +67,16 @@ public class AddAccount extends HttpServlet {
                 ps.setString(1, accid);
                 ResultSet name = ps.executeQuery();
                 request.setAttribute("username", name);
-                request.getRequestDispatcher("add-product.jsp").forward(request, response);
+                request.getRequestDispatcher("add-account.jsp").forward(request, response);
             } else {
                 String name = request.getParameter("name");
-                String password = request.getParameter("password");
+                String ePass = Security.encrypt(request.getParameter("password"), key); 
                 String role = request.getParameter("role");
                 String query = "INSERT INTO ACCOUNTS(ACC_NAME, ACC_PASS, ACC_ROLE) VALUES (?, ?, ?)";
                 PreparedStatement pstmt = conn.prepareStatement(query);
                 pstmt.setString(1, name);
                 pstmt.setString(2, ePass);
-                pstmt.setString(4, role);
+                pstmt.setString(3, role);
                 pstmt.executeUpdate();
                 request.setAttribute("addedAccount", true);
                 request.getRequestDispatcher("Dashboard").forward(request, response);
