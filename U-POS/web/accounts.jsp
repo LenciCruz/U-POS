@@ -17,6 +17,7 @@
             while (rs.next()) {%>
         <h2>Welcome back, <%= rs.getString("ACC_NAME")%> !</h2>
         <% }%>
+        <a href="Dashboard">Home</a>
 
         <table>
             <tr>

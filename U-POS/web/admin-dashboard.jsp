@@ -23,7 +23,7 @@
             // alerts for adding, updating, and deleting records
             Boolean addProd = (Boolean) request.getAttribute("addedProduct");
             Boolean addAcc = (Boolean) request.getAttribute("addedAccount");
-
+            Boolean delAcc = (Boolean) request.getAttribute("deletedAccount");
             if (addProd != null) {
         %>
         <script>
@@ -33,11 +33,19 @@
             }
             if (addAcc != null) {
         %>
-         <script>
+        <script>
             alert("Alert: New account added succesfully");
         </script>
-        <% } %>
-        
+        <%
+            }
+            if (delAcc != null) {
+        %>
+        <script>
+            alert("Alert: Account deleted succesfully");
+        </script>
+        <%
+            }
+        %>
         <a href="Logout"><input type=button value="Logout"></a>
         <h3>Sales Button</h3>
         <a href="Inventory"><input type=button value="Inventory Page"></a>
