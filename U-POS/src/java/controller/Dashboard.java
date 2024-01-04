@@ -14,15 +14,15 @@ import javax.servlet.http.*;
  * @author Lenci
  */
 public class Dashboard extends HttpServlet {
-
+    
     Connection conn;
-
+    
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
-
+        
         ServletContext context = config.getServletContext();
-
+        
         try {
             Class.forName(context.getInitParameter("jdbcClassName"));
             String username = context.getInitParameter("dbUser");
@@ -35,7 +35,7 @@ public class Dashboard extends HttpServlet {
             System.out.println("ClassNotFoundException error occured - " + nfe.getMessage());
         }
     }
-
+    
     @Override
     public void destroy() {
         super.destroy(); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/OverriddenMethodBody
@@ -45,36 +45,46 @@ public class Dashboard extends HttpServlet {
             System.err.println(e.getMessage());
         }
     }
-
+    
     protected void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {
             HttpSession session = request.getSession();
-            String accid = (String) session.getAttribute("ACC_ID");
-            String accrole = (String) session.getAttribute("ACC_ROLE");
-
-            if (accid == null) {
+            String empid = (String) session.getAttribute("EMP_ID");
+            String emprole = (String) session.getAttribute("EMP_ROLE");
+            String empstatus = (String) session.getAttribute("EMP_STATUS");
+            
+            if (empid == null) {
                 request.getRequestDispatcher("login.jsp").forward(request, response);
             } else {
-                String query = "select * from accounts where acc_id = ?";
+                String query = "select * from employee where emp_id = ?";
                 PreparedStatement ps = conn.prepareStatement(query);
-                ps.setString(1, accid);
+                ps.setString(1, empid);
                 ResultSet name = ps.executeQuery();
-                //checks user role
-                if (accrole.equals("cashier")) {
-                    request.setAttribute("username", name);
-                    //TODO: query for product table para set attribute papuntang sales jsp
-                    request.getRequestDispatcher("sales.jsp").forward(request, response);
-                } else {
-                    request.setAttribute("username", name);
-                    request.getRequestDispatcher("admin-dashboard.jsp").forward(request, response);
+                
+                if (name.next()) {
+                    if (empstatus.equals("activated")) {
+                        //checks user role
+                        if (emprole.equalsIgnoreCase("Cashier")) {
+                            request.setAttribute("EMP_ID", empid);                            
+                            request.setAttribute("username", name);
+                            request.getRequestDispatcher("sales.jsp").forward(request, response);
+                        } else {
+                            request.setAttribute("EMP_ID", empid);
+                            request.setAttribute("username", name);
+                            request.getRequestDispatcher("home.jsp").forward(request, response);
+                        }
+                    } else {
+                        request.setAttribute("deactivatedEmployee", true);
+                        request.getRequestDispatcher("login.jsp").forward(request, response);
+                    }
                 }
-
+                
             }
-
+            
         } catch (SQLException sqle) {
             sqle.printStackTrace();
         }
-
+        
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">

@@ -1,10 +1,5 @@
 package controller;
 
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
- */
-
 import java.io.*;
 import java.sql.*;
 import javax.servlet.*;
@@ -39,8 +34,8 @@ public class Login extends HttpServlet {
             System.out.println("ClassNotFoundException error occured - " + nfe.getMessage());
         }
     }
-    
-     @Override
+
+    @Override
     public void destroy() {
         super.destroy(); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/OverriddenMethodBody
         try {
@@ -51,37 +46,48 @@ public class Login extends HttpServlet {
     }
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-       
-            //retrieve key using servlet context and convert to bytes
-            String publicKey = getServletContext().getInitParameter("key");
-            byte[] key = publicKey.getBytes();
-            String ePass = Security.encrypt(request.getParameter("pass"), key); 
-        
+
+        //retrieve key using servlet context and convert to bytes
+        String publicKey = getServletContext().getInitParameter("key");
+        byte[] key = publicKey.getBytes();
+        String ePass = Security.encrypt(request.getParameter("password"), key);
+
         try {
             String mvc = request.getParameter("login");
-            if (mvc == null) request.getRequestDispatcher("login.jsp").forward(request, response);
-            
+            if (mvc == null) {
+                request.getRequestDispatcher("login.jsp").forward(request, response);
+            }
+
             //for login credentials, using parameterized query
             if (conn != null) {
-                String loginquery = "SELECT * FROM ACCOUNTS WHERE ACC_NAME = ? AND ACC_PASS = ?";
+                String loginquery = "SELECT * FROM EMPLOYEE WHERE EMP_USERNAME = ? AND EMP_PASSWORD = ?";
                 PreparedStatement ps = conn.prepareStatement(loginquery);
-                ps.setString(1, request.getParameter("uname"));
+                ps.setString(1, request.getParameter("username"));
                 ps.setString(2, ePass);
                 ResultSet rs = ps.executeQuery();
 
                 // correct credentials
                 if (rs.next()) {
                     HttpSession session = request.getSession();
-                    session.setAttribute("ACC_ID", rs.getString("ACC_ID"));
-                    session.setAttribute("ACC_ROLE", rs.getString("ACC_ROLE"));
-                    request.getRequestDispatcher("Dashboard").forward(request, response);
+                    session.setAttribute("EMP_ID", rs.getString("EMP_ID"));
+                    session.setAttribute("EMP_ROLE", rs.getString("EMP_ROLE"));
+                    session.setAttribute("EMP_STATUS", rs.getString("EMP_STATUS"));
+                    //insert into activity table
+                    String actQuery = "INSERT INTO ACTIVITY (ACT_DATETIME, EMP_ID, ACT_TYPE, ACT_DESCRIPTION) VALUES (now(), ? , ?, ?);";
+                    PreparedStatement ps1 = conn.prepareStatement(actQuery);
+                    ps1.setString(1, rs.getString("EMP_ID"));
+                    ps1.setString(2, "Login");
+                    ps1.setString(3, rs.getString("EMP_FULLNAME") + " logged in the system");
+                    ps1.executeUpdate();
+
+                    request.getRequestDispatcher("loadingScreen.jsp").forward(request, response);
                 } else {
+                    request.setAttribute("incorrectCreds", true);
                     request.getRequestDispatcher("login.jsp").forward(request, response);
                 }
             }
         } catch (SQLException sqle) {
             sqle.printStackTrace();
-            response.sendRedirect("Error.jsp");
         }
     }
 
